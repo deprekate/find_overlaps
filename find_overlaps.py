@@ -20,10 +20,12 @@ args = parser.parse_args()
 
 # GO THROUGH FIRST FILE AND FIND ALL POSSIBLE KMERS ON RIGHT
 rights = dict()
+length = dict()
 head = seq = ''
-with open(args.file1) as fp:
+with open(args.file2) as fp:
 	for line in add_last(fp, '>'):
 		if line.startswith('>'):
+			length[head] = len(seq)
 			for i in range(len(seq) - args.min + 1):
 				rights.setdefault(seq[i:],[]).append(head)
 			head = line[1:].rstrip().split(' ')[0]
@@ -35,16 +37,17 @@ with open(args.file1) as fp:
 
 # GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON LEFT
 head = seq = ''
-with open(args.file2) as fp:
+with open(args.file1) as fp:
 	for line in add_last(fp, '>'):
 		if line.startswith('>'):
 			for i in range(len(seq) - args.min):
 				kmer = seq[:len(seq)-i]
 				if kmer in rights:
 					for right in rights[kmer]:
-						print(right, '_', head, sep='', end=',   ')
-						print('1', end=',   ')
-						print(len(kmer), end=',   ')
+						print(head, '_', right, sep='', end=',')
+						print('1'.rjust(4), end=',')
+						print(str(length[right] - len(kmer) + 1).rjust(4), end=',')
+						print(str(len(kmer)).rjust(4), end=', ')
 						print(kmer)
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
