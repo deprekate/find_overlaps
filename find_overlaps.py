@@ -58,7 +58,7 @@ if args.skip and args.file1 == args.file2:
 ends = dict()
 length = dict()
 head = seq = ''
-with open(args.file2) as fp:
+with open(args.file1) as fp:
 	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			length[head] = len(seq)
@@ -75,7 +75,7 @@ del ends['']
 
 # GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 head = seq = ''
-with open(args.file1) as fp:
+with open(args.file2) as fp:
 	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			seen = dict()
@@ -85,7 +85,7 @@ with open(args.file1) as fp:
 					if kmer in ends:
 						for end in ends[kmer]:
 							if end not in seen:
-								print(head, '_', end, sep='', end='\t')
+								print(end, '_', head, sep='', end='\t')
 								print('1', end='\t')
 								print(length[end] - len(kmer) + 1, end='\t')
 								print(len(kmer), end='\t')
