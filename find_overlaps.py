@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from argparse import RawTextHelpFormatter
-from itertools import chain as add_last
+from itertools import chain as chain
 from math import log
 import collections
 import math
@@ -54,44 +54,47 @@ args = parser.parse_args()
 if args.skip and args.file1 == args.file2:
 	exit()
 
-# GO THROUGH FIRST FILE AND FIND ALL POSSIBLE KMERS ON RIGHT
-rights = dict()
+# GO THROUGH FIRST FILE AND FIND ALL POSSIBLE KMERS ON ENDS
+ends = dict()
 length = dict()
 head = seq = ''
 with open(args.file2) as fp:
-	for line in add_last(fp, '>'):
+	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			length[head] = len(seq)
-			for i in range(len(seq) - args.min + 1):
-				rights.setdefault(seq[i:],[]).append(head)
+			ends.setdefault(seq,[]).append(head)
+			for i in range(1, len(seq) - args.min + 1 ):
+				ends.setdefault(seq[  :len(seq)-i ],[]).append(head)
+				ends.setdefault(seq[ i:           ],[]).append(head)
 				#rights.setdefault(encode(seq[i:]),[]).append(head)
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
 			seq += line.rstrip()
+del ends['']
 
-# GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON LEFT
+# GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 head = seq = ''
 with open(args.file1) as fp:
-	for line in add_last(fp, '>'):
+	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			seen = dict()
-			for i in range(len(seq) - args.min + 1):
-				for kmer in make_perms(seq[:len(seq)-i], args.allow):
+			for i in range(0, len(seq) - args.min + 1):
+				for kmer in chain(make_perms(seq[:len(seq)-i], args.allow), make_perms(seq[i:], args.allow)):
 					#bits = encode(seq[:len(seq)-i])
-					if kmer in rights:
-						for right in rights[kmer]:
-							if right not in seen:
-								print(head, '_', right, sep='', end=',')
-								print('1'.rjust(4), end=',')
-								print(str(length[right] - len(kmer) + 1).rjust(4), end=',')
-								print(str(len(kmer)).rjust(4), end=', ')
+					if kmer in ends:
+						for end in ends[kmer]:
+							if end not in seen:
+								print(head, '_', end, sep='', end='\t')
+								print('1', end='\t')
+								print(length[end] - len(kmer) + 1, end='\t')
+								print(len(kmer), end='\t')
 								print(kmer, end='')
 								if args.entropy:
-									print(', ', end='')
-									print(entropy(kmer, args.entropy), end='')
+									print('\t', end='')
+									print(entropy(kmer, args.entropy), end='\t')
 								print()
-							seen[right] = True
+							seen[end] = True
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
