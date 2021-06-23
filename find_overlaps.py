@@ -85,7 +85,7 @@ with open(args.file2) as fp:
 					if kmer in ends:
 						for end in ends[kmer]:
 							if end not in seen:
-								print(end, '_', head, sep='', end='\t')
+								print(end, head, sep='\t', end='\t')
 								print('1', end='\t')
 								print(length[end] - len(kmer) + 1, end='\t')
 								print(len(kmer), end='\t')
