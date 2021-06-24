@@ -43,6 +43,3 @@ with open(args.infile) as fp:
 		
 for cluster in clusters:
 	print(len(cluster) - 1, cluster)
-
-
-print(where)
