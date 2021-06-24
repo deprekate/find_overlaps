@@ -26,16 +26,23 @@ where = dict()
 with open(args.infile) as fp:
 	for line in fp:
 		read1,read2 = line.split('\t')[:2]
-		if read1 not in where and read2 not in where:
-			l = [read1, read2]
-			clusters.append(l)
-			where[read1] = l
-			where[read2] = l
+		if read1 in where and read2 in where:
+			clusters.remove(where[read2])
+			for item in where[read2]:
+				where[read1].append(item)
+				where[item] = where[read1]
 		elif read1 in where:
 			where[read1].append(read2)
 		elif read2 in where:
 			where[read2].append(read1)
+		else:
+			lis = [read1, read2]
+			clusters.append(lis)
+			where[read1] = lis
+			where[read2] = lis
 		
-
 for cluster in clusters:
 	print(len(cluster) - 1, cluster)
+
+
+print(where)
