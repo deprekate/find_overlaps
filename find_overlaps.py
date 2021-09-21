@@ -84,7 +84,7 @@ with open(args.file2) as fp:
 					#bits = encode(seq[:len(seq)-i])
 					if kmer in ends:
 						for end in ends[kmer]:
-							if end not in seen:
+							if end not in seen and (args.file1 != args.file2 or end != head): 
 								print(end, head, sep='\t', end='\t')
 								print('1', end='\t')
 								print(length[end] - len(kmer) + 1, end='\t')
