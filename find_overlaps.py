@@ -75,6 +75,7 @@ del ends['']
 
 # GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 head = seq = ''
+seenpairs = dict()
 with open(args.file2) as fp:
 	for line in chain(fp, '>'):
 		if line.startswith('>'):
@@ -84,7 +85,7 @@ with open(args.file2) as fp:
 					#bits = encode(seq[:len(seq)-i])
 					if kmer in ends:
 						for end in ends[kmer]:
-							if end not in seen and (args.file1 != args.file2 or end != head): 
+							if end not in seen and tuple([end,head]) not in seenpairs and (args.file1 != args.file2 or end != head): 
 								print(end, head, sep='\t', end='\t')
 								print('1', end='\t')
 								print(length[end] - len(kmer) + 1, end='\t')
@@ -94,6 +95,7 @@ with open(args.file2) as fp:
 									print('\t', end='')
 									print(entropy(kmer, args.entropy), end='\t')
 								print()
+								seenpairs[ tuple( [head,end] ) ] = True
 							seen[end] = True
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
