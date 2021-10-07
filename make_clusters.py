@@ -33,8 +33,10 @@ with open(args.infile) as fp:
 				where[item] = where[read1]
 		elif read1 in where:
 			where[read1].append(read2)
+			where[read2] = where[read1]
 		elif read2 in where:
 			where[read2].append(read1)
+			where[read1] = where[read2]
 		else:
 			lis = [read1, read2]
 			clusters.append(lis)
