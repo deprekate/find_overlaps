@@ -27,10 +27,11 @@ with open(args.infile) as fp:
 	for line in fp:
 		read1,read2 = line.split('\t')[:2]
 		if read1 in where and read2 in where:
-			clusters.remove(where[read2])
-			for item in where[read2]:
-				where[read1].append(item)
-				where[item] = where[read1]
+			if where[read1] != where[read2]:
+				clusters.remove(where[read2])
+				for item in where[read2]:
+					where[read1].append(item)
+					where[item] = where[read1]
 		elif read1 in where:
 			where[read1].append(read2)
 			where[read2] = where[read1]
@@ -42,6 +43,6 @@ with open(args.infile) as fp:
 			clusters.append(lis)
 			where[read1] = lis
 			where[read2] = lis
-		
+
 for cluster in clusters:
 	print(len(cluster) - 1, cluster)
