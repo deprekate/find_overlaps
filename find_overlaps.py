@@ -3,9 +3,11 @@ import sys
 import argparse
 from argparse import RawTextHelpFormatter
 from itertools import chain as chain
+from itertools import repeat
 from math import log
 import collections
 import math
+
 
 def is_valid_file(x):
     if not os.path.exists(x):
@@ -31,13 +33,19 @@ def entropy(sequence, k=4):
 
 
 bases = ['A','C','T','G']
-def make_perms(s, allow):
-	if not allow:
-		yield s
-	else:
+trans = str.maketrans('ACTG', 'TGAC')
+def make_kmers(s, args):
+	if args.allow:
 		for i, c in enumerate(s):
 			for other in bases :
 				yield s[0:i]  + other + s[i+1:]
+				if args.revcomp:
+					yield ''.join([s[0:i], other, s[i+1:]]).translate(trans)[::-1]
+	else:
+		yield s
+		if args.revcomp:
+			yield s.translate(trans)[::-1]
+
 
 usage = '%s [-opt1, [-opt2, ...]] file1 file2' % __file__
 parser = argparse.ArgumentParser(description='', formatter_class=RawTextHelpFormatter, usage=usage)
@@ -48,6 +56,7 @@ parser.add_argument('-m', '--min', type=int, default=30, help='minimum length of
 parser.add_argument('-e', '--entropy', type=int, default=0, help='size of kmers to show entropy for alignment')
 parser.add_argument('-a', '--allow', action='store_true', help='allow 1 mismatch')
 parser.add_argument('-s', '--skip', action='store_true', help='skip output if they are the same file')
+parser.add_argument('-r', '--revcomp', action='store_true', help='do revers complement comparison')
 args = parser.parse_args()
 
 # SKIP OUTPUT IF FILE1 AND FILE2 ARE THE SAME FILE
@@ -55,23 +64,21 @@ if args.skip and args.file1 == args.file2:
 	exit()
 
 # GO THROUGH FIRST FILE AND FIND ALL POSSIBLE KMERS ON ENDS
-ends = dict()
+lefts = dict()
+rights = dict()
 length = dict()
 head = seq = ''
 with open(args.file1) as fp:
 	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			length[head] = len(seq)
-			ends.setdefault(seq,[]).append(head)
-			for i in range(1, len(seq) - args.min + 1 ):
-				ends.setdefault(seq[  :len(seq)-i ],[]).append(head)
-				ends.setdefault(seq[ i:           ],[]).append(head)
-				#rights.setdefault(encode(seq[i:]),[]).append(head)
+			for i in range(0, len(seq) - args.min + 1 ):
+				lefts.setdefault(seq[  :len(seq)-i ],[]).append(head)
+				rights.setdefault(seq[ i:           ],[]).append(head)
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
-			seq += line.rstrip()
-del ends['']
+			seq += line.rstrip().upper()
 
 # GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 head = seq = ''
@@ -81,10 +88,10 @@ with open(args.file2) as fp:
 		if line.startswith('>'):
 			seen = dict()
 			for i in range(0, len(seq) - args.min + 1):
-				for kmer in chain(make_perms(seq[:len(seq)-i], args.allow), make_perms(seq[i:], args.allow)):
+				for left,right in zip(make_kmers(seq[:len(seq)-i], args), make_kmers(seq[i:], args)):
 					#bits = encode(seq[:len(seq)-i])
-					if kmer in ends:
-						for end in ends[kmer]:
+					if left in rights or right in lefts:
+						for kmer,end in chain(zip(repeat(left), rights.get(left,[])), zip(repeat(right), lefts.get(right,[]))):
 							if end not in seen and tuple([end,head]) not in seenpairs and (args.file1 != args.file2 or end != head): 
 								print(end, head, sep='\t', end='\t')
 								print('1', end='\t')
@@ -100,5 +107,5 @@ with open(args.file2) as fp:
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
-			seq += line.rstrip()
+			seq += line.rstrip().upper()
 
