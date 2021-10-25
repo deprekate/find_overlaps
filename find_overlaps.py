@@ -94,7 +94,6 @@ with open(args.file2) as fp:
 						for kmer,end in chain(zip(repeat(left), rights.get(left,[])), zip(repeat(right), lefts.get(right,[]))):
 							tup = tuple([end,head])
 							if (end not in seen or not any([kmer in item for item in seen[end]])) and (tup not in seenpairs or not any([kmer in item for item in seenpairs[tup]])) and (args.file1 != args.file2 or end != head): 
-							#if (end not in seen or kmer not in seen[end]) and (tup not in seenpairs or kmer not in seenpairs[tup]) and (args.file1 != args.file2 or end != head): 
 							#if (end not in seen) and (tup not in seenpairs) and (args.file1 != args.file2 or end != head): 
 								print(end, head, sep='\t', end='\t')
 								print('1', end='\t')
@@ -105,8 +104,6 @@ with open(args.file2) as fp:
 									print('\t', end='')
 									print(entropy(kmer, args.entropy), end='\t')
 								print()
-								#seenpairs[ tup[::-1] ] = seenpairs.get( tup[::-1] , '') + kmer # True
-								#seen[end] = seen.get(end, '') + kmer #True
 								seenpairs.setdefault( tup[::-1], [] ).append( kmer )
 								seen.setdefault( end , [] ).append(kmer)
 			head = line[1:].rstrip().split(' ')[0]
