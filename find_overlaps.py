@@ -56,7 +56,7 @@ parser.add_argument('-m', '--min', type=int, default=30, help='minimum length of
 parser.add_argument('-e', '--entropy', type=int, default=0, help='size of kmers to show entropy for alignment')
 parser.add_argument('-a', '--allow', action='store_true', help='allow 1 mismatch')
 parser.add_argument('-s', '--skip', action='store_true', help='skip output if they are the same file')
-parser.add_argument('-r', '--revcomp', action='store_true', help='do revers complement comparison')
+parser.add_argument('-r', '--revcomp', action='store_true', help='do reverse complement comparison')
 args = parser.parse_args()
 
 # SKIP OUTPUT IF FILE1 AND FILE2 ARE THE SAME FILE
