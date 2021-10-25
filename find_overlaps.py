@@ -46,6 +46,23 @@ def make_kmers(s, args):
 		if args.revcomp:
 			yield s.translate(trans)[::-1]
 
+def print_match(end, head, kmer, args):
+	args.outfile.print(end)
+	args.outfile.print('\t')
+	args.outfile.print(head)
+	args.outfile.print('\t')
+	args.outfile.print('1')
+	args.outfile.print('\t')
+	args.outfile.print(length[end] - len(kmer) + 1)
+	args.outfile.print('\t')
+	args.outfile.print(len(kmer))
+	args.outfile.print('\t')
+	args.outfile.print(kmer)
+	if args.entropy:
+		args.outfile.print('\t')
+		args.outfile.print(entropy(kmer, args.entropy))
+	args.outfile.print('\n')
+
 
 usage = '%s [-opt1, [-opt2, ...]] file1 file2' % __file__
 parser = argparse.ArgumentParser(description='', formatter_class=RawTextHelpFormatter, usage=usage)
@@ -58,6 +75,16 @@ parser.add_argument('-a', '--allow', action='store_true', help='allow 1 mismatch
 parser.add_argument('-s', '--skip', action='store_true', help='skip output if they are the same file')
 parser.add_argument('-r', '--revcomp', action='store_true', help='do reverse complement comparison')
 args = parser.parse_args()
+
+def _print(self, item):
+	if isinstance(item, str):
+		self._write(item)
+	else:
+		self._write(str(item))
+#setattr(args.outfile, '_write', getattr(args.outfile, 'write'))
+args.outfile.print = _print.__get__(args.outfile)
+
+
 
 # SKIP OUTPUT IF FILE1 AND FILE2 ARE THE SAME FILE
 if args.skip and args.file1 == args.file2:
@@ -74,11 +101,14 @@ with open(args.file1) as fp:
 			length[head] = len(seq)
 			for i in range(0, len(seq) - args.min + 1 ):
 				lefts.setdefault(seq[  :len(seq)-i ],[]).append(head)
-				rights.setdefault(seq[ i:           ],[]).append(head)
+				rights.setdefault(seq[ i:          ],[]).append(head)
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
 			seq += line.rstrip().upper()
+
+
+
 
 # GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 head = seq = ''
@@ -95,15 +125,7 @@ with open(args.file2) as fp:
 							tup = tuple([end,head])
 							if (end not in seen or not any([kmer in item for item in seen[end]])) and (tup not in seenpairs or not any([kmer in item for item in seenpairs[tup]])) and (args.file1 != args.file2 or end != head): 
 							#if (end not in seen) and (tup not in seenpairs) and (args.file1 != args.file2 or end != head): 
-								print(end, head, sep='\t', end='\t')
-								print('1', end='\t')
-								print(length[end] - len(kmer) + 1, end='\t')
-								print(len(kmer), end='\t')
-								print(kmer, end='')
-								if args.entropy:
-									print('\t', end='')
-									print(entropy(kmer, args.entropy), end='\t')
-								print()
+								print_match(end, head, kmer, args)
 								seenpairs.setdefault( tup[::-1], [] ).append( kmer )
 								seen.setdefault( end , [] ).append(kmer)
 			head = line[1:].rstrip().split(' ')[0]
