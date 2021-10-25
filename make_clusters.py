@@ -25,7 +25,7 @@ clusters = list()
 where = dict()
 with open(args.infile) as fp:
 	for line in fp:
-		read1,read2 = line.split('\t')[:2]
+		read1,read2 = line.rstrip().split('\t')[:2]
 		if read1 in where and read2 in where:
 			if where[read1] != where[read2]:
 				clusters.remove(where[read2])
