@@ -14,6 +14,23 @@ def is_valid_file(x):
         raise argparse.ArgumentTypeError("{0} does not exist".format(x))
     return x
 
+def print_match(end, head, kmer, args):
+	args.outfile.print(end)
+	args.outfile.print('\t')
+	args.outfile.print(head)
+	args.outfile.print('\t')
+	args.outfile.print('1')
+	args.outfile.print('\t')
+	args.outfile.print(length[end] - len(kmer) + 1)
+	args.outfile.print('\t')
+	args.outfile.print(len(kmer))
+	args.outfile.print('\t')
+	args.outfile.print(kmer)
+	if args.entropy:
+		args.outfile.print('\t')
+		args.outfile.print(entropy(kmer, args.entropy))
+	args.outfile.print('\n')
+
 def encode(string):
     result = 1
     for char in string:
@@ -46,23 +63,6 @@ def make_kmers(s, args):
 		if args.revcomp:
 			yield s.translate(trans)[::-1]
 
-def print_match(end, head, kmer, args):
-	args.outfile.print(end)
-	args.outfile.print('\t')
-	args.outfile.print(head)
-	args.outfile.print('\t')
-	args.outfile.print('1')
-	args.outfile.print('\t')
-	args.outfile.print(length[end] - len(kmer) + 1)
-	args.outfile.print('\t')
-	args.outfile.print(len(kmer))
-	args.outfile.print('\t')
-	args.outfile.print(kmer)
-	if args.entropy:
-		args.outfile.print('\t')
-		args.outfile.print(entropy(kmer, args.entropy))
-	args.outfile.print('\n')
-
 
 usage = '%s [-opt1, [-opt2, ...]] file1 file2' % __file__
 parser = argparse.ArgumentParser(description='', formatter_class=RawTextHelpFormatter, usage=usage)
@@ -78,10 +78,9 @@ args = parser.parse_args()
 
 def _print(self, item):
 	if isinstance(item, str):
-		self._write(item)
+		self.write(item)
 	else:
-		self._write(str(item))
-#setattr(args.outfile, '_write', getattr(args.outfile, 'write'))
+		self.write(str(item))
 args.outfile.print = _print.__get__(args.outfile)
 
 
