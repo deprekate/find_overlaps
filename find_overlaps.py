@@ -49,19 +49,19 @@ def entropy(sequence, k=4):
 	return -H
 
 
-bases = ['A','C','T','G']
 trans = str.maketrans('ACTG', 'TGAC')
-def make_kmers(s, args):
-	if args.allow:
-		for i, c in enumerate(s):
-			for other in bases :
-				yield s[0:i]  + other + s[i+1:]
-				if args.revcomp:
-					yield ''.join([s[0:i], other, s[i+1:]]).translate(trans)[::-1]
-	else:
-		yield s
-		if args.revcomp:
-			yield s.translate(trans)[::-1]
+def make_kmers(seq, args):
+	seqs = [ seq, seq.translate(trans)[::-1] ] if args.revcomp else [seq]
+	for s in seqs:
+		for i in range(0, len(s) - args.min + 1):
+			s1 = s[:len(s)-i]
+			s2 = s[i:]
+			if args.allow:
+				for j, c in enumerate(s1):
+					for other in 'ACTG':
+						yield s1[0:j]  + other + s1[j+1:] , s2[0:j]  + other + s2[j+1:]
+			else:
+				yield s1,s2
 
 
 usage = '%s [-opt1, [-opt2, ...]] file1 file2' % __file__
@@ -75,7 +75,6 @@ parser.add_argument('-a', '--allow', action='store_true', help='allow 1 mismatch
 parser.add_argument('-s', '--skip', action='store_true', help='skip output if they are the same file')
 parser.add_argument('-r', '--revcomp', action='store_true', help='do reverse complement comparison')
 args = parser.parse_args()
-
 def _print(self, item):
 	if isinstance(item, str):
 		self.write(item)
@@ -88,6 +87,8 @@ args.outfile.print = _print.__get__(args.outfile)
 # SKIP OUTPUT IF FILE1 AND FILE2 ARE THE SAME FILE
 if args.skip and args.file1 == args.file2:
 	exit()
+
+
 
 # GO THROUGH FIRST FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 lefts = dict()
@@ -107,8 +108,6 @@ with open(args.file1) as fp:
 			seq += line.rstrip().upper()
 
 
-
-
 # GO THROUGH OTHER FILE AND FIND ALL POSSIBLE KMERS ON ENDS
 head = seq = ''
 seenpairs = dict()
@@ -116,18 +115,17 @@ with open(args.file2) as fp:
 	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			seen = dict()
-			for i in range(0, len(seq) - args.min + 1):
-				for left,right in zip(make_kmers(seq[:len(seq)-i], args), make_kmers(seq[i:], args)):
-					#bits = encode(seq[:len(seq)-i])
-					if left in rights or right in lefts:
-						for kmer,end in chain(zip(repeat(left), rights.get(left,[])), zip(repeat(right), lefts.get(right,[]))):
-							tup = tuple([end,head])
-							if (end not in seen or not any([kmer in item for item in seen[end]])) and (tup not in seenpairs or not any([kmer in item for item in seenpairs[tup]])) and (args.file1 != args.file2 or end != head): 
-							#if (end not in seen) and (tup not in seenpairs) and (args.file1 != args.file2 or end != head): 
-								print_match(end, head, kmer, args)
-								seenpairs.setdefault( tup[::-1], [] ).append( kmer )
-								seen.setdefault( end , [] ).append(kmer)
+			for left,right in make_kmers(seq, args):
+				if left in rights or right in lefts:
+					for kmer,end in chain(zip(repeat(left), rights.get(left,[])), zip(repeat(right), lefts.get(right,[]))):
+						tup = tuple([end,head])
+						if (end not in seen or not any([kmer in item for item in seen[end]])) and (tup not in seenpairs or not any([kmer in item for item in seenpairs[tup]])) and (args.file1 != args.file2 or end != head): 
+							print_match(end, head, kmer, args)
+							seenpairs.setdefault( tup[::-1], [] ).append( kmer )
+							seen.setdefault( end , [] ).append(kmer)
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
 			seq += line.rstrip().upper()
+
+
