@@ -61,7 +61,7 @@ def make_kmers(seq, args):
 			if args.mismatch:
 				for j, c in enumerate(s1):
 					for other in 'ACTG':
-						yield s1[0:j]  + other + s1[j+1:] , s2[0:j]  + other + s2[j+1:]
+						yield s1[0:j]  + other + s1[j+1:] , s2[0:j]  + other + s2[j+1:] , d
 			else:
 				yield s1,s2,d
 
