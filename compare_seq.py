@@ -18,7 +18,7 @@ usage = '%s [-opt1, [-opt2, ...]] directory' % __file__
 parser = argparse.ArgumentParser(description='', formatter_class=RawTextHelpFormatter, usage=usage)
 parser.add_argument('directory', type=is_valid_file, help='input file')
 parser.add_argument('-o', '--outfile', action="store", default=sys.stdout, type=argparse.FileType('w'), help='where to write output [stdout]')
-#parser.add_argument('-l', '--len', type=int, default=30, help='minimum length of overlap')
+parser.add_argument('-c', '--column', type=int, default=1, help='The column to look for the sequence in')
 parser.add_argument('-x', '--exact', action='store_true', help='Allow only exact matches')
 #parser.add_argument('-r', '--revcomp', action='store_true', help='do reverse complement comparison')
 args = parser.parse_args()
@@ -34,8 +34,9 @@ for name in files:
 	args.outfile.write(name)
 	with open(os.path.join(args.directory, name)) as f:
 		for line in f:
-			if line.rstrip():
-				sequences.append(line.rstrip())
+			seq = line.rstrip().split('\t')[args.column - 1]
+			if seq:
+				sequences.append(seq)
 args.outfile.write('\n')
 
 # Go THROUGH EACH FILE AND FIND WHETHER THE SEQ IS PRESENT
@@ -45,7 +46,8 @@ for seq in sequences:
 		with open(os.path.join(args.directory, name)) as f:
 			seen = '0'
 			for line in f:
-				if (not args.exact and seq in line) or seq == line.rstrip():
+				rseq = line.rstrip().split('\t')[args.column - 1]
+				if seq and (not args.exact and seq in rseq) or seq == rseq:
 					seen = '1'
 		args.outfile.write('\t')
 		args.outfile.write(seen)
