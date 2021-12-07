@@ -28,7 +28,7 @@ files = sorted( os.listdir(args.directory) )
 
 # OPEN ALL THE FILES AND GET ALL THE SEQUENCES
 args.outfile.write('sequence')
-sequences = list()
+sequences = dict()
 for name in files:
 	args.outfile.write('\t')
 	args.outfile.write(name)
@@ -36,11 +36,11 @@ for name in files:
 		for line in f:
 			seq = line.rstrip().split('\t')[args.column - 1]
 			if seq:
-				sequences.append(seq)
+				sequences[seq] = True
 args.outfile.write('\n')
 
 # Go THROUGH EACH FILE AND FIND WHETHER THE SEQ IS PRESENT
-for seq in sequences:
+for seq in sequences.keys():
 	args.outfile.write(seq)
 	for name in files:
 		with open(os.path.join(args.directory, name)) as f:
