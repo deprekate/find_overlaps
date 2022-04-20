@@ -14,7 +14,7 @@ def is_valid_file(x):
         raise argparse.ArgumentTypeError("{0} does not exist".format(x))
     return x
 
-def print_match(end, head, kmer, side, d, args):
+def print_match(end, head, kmer, side, d, args, i):
 	args.outfile.print(end)
 	args.outfile.print('\t')
 	args.outfile.print(head)
@@ -31,6 +31,9 @@ def print_match(end, head, kmer, side, d, args):
 	if args.entropy:
 		args.outfile.print('\t')
 		args.outfile.print(entropy(kmer, args.entropy))
+	if args.distance:
+		args.outfile.print('\t')
+		args.outfile.print(i)
 	args.outfile.print('\n')
 
 def encode(string):
@@ -59,11 +62,12 @@ def make_kmers(seq, args):
 			s1 = s[:len(s)-i]
 			s2 = s[i:]
 			if args.mismatch:
+				yield s1,s2,d,0
 				for j, c in enumerate(s1):
 					for other in 'ACTG':
-						yield s1[0:j]  + other + s1[j+1:] , s2[0:j]  + other + s2[j+1:] , d
+						yield s1[0:j]  + other + s1[j+1:] , s2[0:j]  + other + s2[j+1:] , d, 1
 			else:
-				yield s1,s2,d
+				yield s1,s2,d,0
 
 
 usage = '%s [-opt1, [-opt2, ...]] file1 file2' % __file__
@@ -73,6 +77,7 @@ parser.add_argument('file2', type=is_valid_file, help='input file')
 parser.add_argument('-o', '--outfile', action="store", default=sys.stdout, type=argparse.FileType('w'), help='where to write output [stdout]')
 parser.add_argument('-l', '--len', type=int, default=30, help='minimum length of overlap')
 parser.add_argument('-e', '--entropy', type=int, default=0, help='size of kmers to show entropy for alignment')
+parser.add_argument('-d', '--distance', action='store_true', help='print out the hamming distance')
 parser.add_argument('-m', '--mismatch', action='store_true', help='allow 1 mismatch')
 parser.add_argument('-a', '--all', action='store_true', help='Include all matches at both ends')
 parser.add_argument('-s', '--skip', action='store_true', help='skip output if they are the same file')
@@ -118,7 +123,7 @@ with open(args.file2) as fp:
 	for line in chain(fp, '>'):
 		if line.startswith('>'):
 			seen = dict()
-			for left,right,d in make_kmers(seq, args):
+			for left,right,d,i in make_kmers(seq, args):
 				if left in rights or right in lefts:
 					for kmer,end,side in chain(zip(repeat(left), rights.get(left,[]), repeat('R')), zip(repeat(right), lefts.get(right,[]), repeat('L'))):
 						tup = tuple([end,head])
@@ -127,9 +132,10 @@ with open(args.file2) as fp:
 							( tup not in seenpairs or (args.all and not any([kmer in kmers for kmers in seenpairs[tup]])) ) and
 							( args.file1 != args.file2 or end != head)
 							): 
-								print_match(end, head, kmer, side, d, args)
+								print_match(end, head, kmer, side, d, args, i)
 								seenpairs.setdefault( tup[::-1], [] ).append( kmer )
 								seen.setdefault( end , [] ).append(kmer)
+				i += 1
 			head = line[1:].rstrip().split(' ')[0]
 			seq = ''
 		else:
