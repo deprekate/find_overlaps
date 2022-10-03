@@ -36,9 +36,12 @@ for name in files:
 		for line in f:
 			seq = line.rstrip().split('\t')[args.column - 1]
 			if seq:
-				sequences[seq] = []
-				sequences[seq].append(name)
+				if seq not in sequences:
+					sequences[seq] = [name]
+				else:
+					sequences[seq].append(name)
 args.outfile.write('\n')
+
 
 # Go THROUGH THE SEQS OF EACH FILE AND FIND WHETHER THE SEQ IS PRESENT
 for seq,names in sequences.items():
